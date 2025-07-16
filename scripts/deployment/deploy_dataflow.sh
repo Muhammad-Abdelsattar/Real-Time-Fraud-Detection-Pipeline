@@ -57,8 +57,7 @@ usage() {
   exit 1
 }
 
-# --- PARSE COMMAND-LINE ARGUMENTS ---
-# Using a while loop to be able to parse more than one argument
+# Parse argments
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         -p|--project-id) GCP_PROJECT_ID="$2"; shift ;;
@@ -130,7 +129,7 @@ gcloud services enable \
   run.googleapis.com
 
 
-# Ensure service account exists
+# Ensure service account exists, if not create a new one with th provided name.
 echo ">>> Checking for service account '${SERVICE_ACCOUNT_EMAIL}'..."
 if gcloud iam service-accounts describe "${SERVICE_ACCOUNT_EMAIL}" &>/dev/null; then
   echo "Service account already exists."
@@ -192,23 +191,3 @@ cd "${PIPELINE_ROOT_ABS_PATH}"
 
 echo ""
 echo ">>>  Deployment command sent successfully!"
-
-
-
-# python main.py \
-#   --runner DataflowRunner \
-#   --project $PROJECT_ID \
-#   --region us-central1 \
-#   --input_topic projects/$PROJECT_ID/topics/$TOPIC \
-#   --output_path gs://fraud-detection-ml-artifacts/raw_transactions \
-#   --model_endpoint_url https://ml-fraud-detection-service-310091317660.us-central1.run.app/predict \
-#   --temp_location gs://fraud-detection-ml-artifacts/temp \
-#   --staging_location gs://fraud-detection-ml-artifacts/staging \
-#   --service_account_email dataflow-sa@$PROJECT_ID.iam.gserviceaccount.com \
-#   --setup_file ./setup.py \
-#   --subnetwork regions/us-central1/subnetworks/default \
-#   --ml_batch_size 100 \
-#   --window_duration_seconds 20 \
-#   --job_name ${JOB_NAME} \
-#   ${UPDATE_FLAG} \
-#   --streaming 
