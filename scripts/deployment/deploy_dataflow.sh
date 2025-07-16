@@ -192,23 +192,3 @@ cd "${PIPELINE_ROOT_ABS_PATH}"
 
 echo ""
 echo ">>>  Deployment command sent successfully!"
-
-
-
-# python main.py \
-#   --runner DataflowRunner \
-#   --project $PROJECT_ID \
-#   --region us-central1 \
-#   --input_topic projects/$PROJECT_ID/topics/$TOPIC \
-#   --output_path gs://fraud-detection-ml-artifacts/raw_transactions \
-#   --model_endpoint_url https://ml-fraud-detection-service-310091317660.us-central1.run.app/predict \
-#   --temp_location gs://fraud-detection-ml-artifacts/temp \
-#   --staging_location gs://fraud-detection-ml-artifacts/staging \
-#   --service_account_email dataflow-sa@$PROJECT_ID.iam.gserviceaccount.com \
-#   --setup_file ./setup.py \
-#   --subnetwork regions/us-central1/subnetworks/default \
-#   --ml_batch_size 100 \
-#   --window_duration_seconds 20 \
-#   --job_name ${JOB_NAME} \
-#   ${UPDATE_FLAG} \
-#   --streaming 
