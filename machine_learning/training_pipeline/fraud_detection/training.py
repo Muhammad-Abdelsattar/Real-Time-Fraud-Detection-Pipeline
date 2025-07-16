@@ -1,35 +1,30 @@
 import numpy as np
 import xgboost as xgb
 import optuna
-import wandb # Import W&B
-from optuna.integration import WeightsAndBiasesCallback # W&B Optuna integration
+import wandb
+from optuna.integration import WeightsAndBiasesCallback
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.impute import SimpleImputer
 from sklearn.model_selection import TimeSeriesSplit
-from sklearn.metrics import roc_auc_score, recall_score # Added recall_score
+from sklearn.metrics import roc_auc_score, recall_score
 
 from config import STUDY_NAME, N_TRIALS, N_SPLITS_CV
 
 def xgb_recall(preds, dtrain):
     labels = dtrain.get_label()
     
-    # For binary:logistic objective, preds are probabilities.
-    # We need to apply a threshold to get binary predictions.
-    # You might want to tune this threshold based on your needs.
+   
     threshold = 0.5 
     binary_preds = (preds > threshold).astype(int)
     
-    # Calculate recall using scikit-learn's recall_score
     # Handle the case where there are no positive actual labels to avoid division by zero
     if np.sum(labels == 1) == 0:
-        # Or return a sensible default like 0.0 or 1.0 depending on your interpretation
         return 'recall', 0.0 
     
     recall = recall_score(labels, binary_preds)
     
-    # XGBoost expects a tuple: (metric_name, metric_value)
     return 'recall', recall
 
     
@@ -103,7 +98,7 @@ def _objective(trial, X, y, numerical_features, categorical_features):
         y_train, y_val = y.iloc[train_index], y.iloc[val_index]
 
         pipeline.fit(X_train, y_train)
-        # Predict actual classes for recall, not probabilities
+        # Predict th actual classes for recall, not probabilities
         preds = pipeline.predict(X_val)
         score = recall_score(y_val, preds)
         scores.append(score)
@@ -116,9 +111,8 @@ def run_hpo_and_train(X_train, y_train, numerical_features, categorical_features
     Runs Optuna HPO to find the best hyperparameters and trains the final model.
     Returns the trained pipeline.
     """
-    # W&B Optuna Callback
-    # Optuna will log all trials to W&B, and the metric_name must match what _objective returns
-    wandb_callback = WeightsAndBiasesCallback(metric_name="recall", wandb_kwargs={"project": wandb.run.project}) # Use project from current run
+    
+    wandb_callback = WeightsAndBiasesCallback(metric_name="recall", wandb_kwargs={"project": wandb.run.project})
 
     study = optuna.create_study(study_name=STUDY_NAME, direction="maximize")
     study.optimize(
@@ -126,7 +120,7 @@ def run_hpo_and_train(X_train, y_train, numerical_features, categorical_features
             trial, X_train, y_train, numerical_features, categorical_features
         ),
         n_trials=N_TRIALS,
-        callbacks=[wandb_callback] # Add W&B callback
+        callbacks=[wandb_callback]
     )
 
     print(f"\nBest HPO trial completed with Recall: {study.best_value:.4f}")
