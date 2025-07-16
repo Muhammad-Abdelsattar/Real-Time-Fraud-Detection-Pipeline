@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plt
-import wandb # Import W&B
-import os # For path manipulation
-import io # For BytesIO if needed, though local temp file is simpler
-import shutil # For copying local file to GCS via helper
+import wandb
+import os 
+import io
+import shutil
 from sklearn.metrics import (
     classification_report,
     confusion_matrix,
@@ -11,8 +11,8 @@ from sklearn.metrics import (
     auc,
     ConfusionMatrixDisplay,
 )
-from config import CONFUSION_MATRIX_PATH, ARTIFACTS_DIR # ARTIFACTS_DIR for local temp path
-from utils import is_gcs_path, open_file # Import utilities
+from config import CONFUSION_MATRIX_PATH, ARTIFACTS_DIR 
+from utils import is_gcs_path, open_file 
 
 
 def evaluate_model(pipeline, X_test, y_test):
@@ -20,7 +20,7 @@ def evaluate_model(pipeline, X_test, y_test):
     y_pred = pipeline.predict(X_test)
     y_pred_proba = pipeline.predict_proba(X_test)[:, 1]
 
-    print("\n--- Model Evaluation Report ---")
+    print(" >> Model Evaluation Report ....")
     print(
         classification_report(y_test, y_pred, target_names=["Not Flagged", "Flagged"])
     )
@@ -56,7 +56,7 @@ def evaluate_model(pipeline, X_test, y_test):
     # This local path will be used for W&B logging and then copied to the final destination if GCS.
     local_cm_path = os.path.join(ARTIFACTS_DIR if not is_gcs_path(ARTIFACTS_DIR) else ".", "confusion_matrix_local.png")
     if is_gcs_path(ARTIFACTS_DIR) and not os.path.exists(os.path.dirname(local_cm_path)):
-        os.makedirs(os.path.dirname(local_cm_path), exist_ok=True) # Ensure local temp dir exists if ARTIFACTS_DIR is GCS
+        os.makedirs(os.path.dirname(local_cm_path), exist_ok=True) 
 
     plt.savefig(local_cm_path)
     print(f"Confusion matrix temporarily saved to {local_cm_path}")
@@ -74,10 +74,10 @@ def evaluate_model(pipeline, X_test, y_test):
                 print(f"Successfully copied confusion matrix to {CONFUSION_MATRIX_PATH}")
             except Exception as e:
                 print(f"Error copying confusion matrix to GCS: {e}")
-        else: # CONFUSION_MATRIX_PATH is local and different from local_cm_path
+        else: 
             print(f"Copying confusion matrix from {local_cm_path} to local path {CONFUSION_MATRIX_PATH}...")
             try:
-                # Ensure parent directory of CONFUSION_MATRIX_PATH exists if it's local
+               
                 if not os.path.exists(os.path.dirname(CONFUSION_MATRIX_PATH)):
                     os.makedirs(os.path.dirname(CONFUSION_MATRIX_PATH), exist_ok=True)
                 shutil.copyfile(local_cm_path, CONFUSION_MATRIX_PATH)
@@ -85,11 +85,10 @@ def evaluate_model(pipeline, X_test, y_test):
             except Exception as e:
                 print(f"Error copying confusion matrix to {CONFUSION_MATRIX_PATH}: {e}")
 
-    # Clean up the initial local_cm_path if it was temporary or has been copied
+    
     if local_cm_path != CONFUSION_MATRIX_PATH or is_gcs_path(ARTIFACTS_DIR) :
-        # is_gcs_path(ARTIFACTS_DIR) means local_cm_path was definitely temporary (in './')
         if os.path.exists(local_cm_path): 
             os.remove(local_cm_path)
             print(f"Removed temporary local confusion matrix: {local_cm_path}")
     
-    plt.close() # Close plot to free memory
+    plt.close()
